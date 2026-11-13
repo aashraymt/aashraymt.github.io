@@ -1,0 +1,43 @@
+---
+// One row of the feed: date and kind, title, description, tag chips, and a ./read link.
+import { entryHref, formatDate, tagHref, type DocEntry } from '../data/content';
+
+interface Props {
+  entry: DocEntry;
+}
+
+const { entry } = Astro.props;
+const { title, description, kind, tags, date, status } = entry.data;
+const href = entryHref(entry.id);
+const haystack = [title, description ?? '', kind, ...tags].join(' ').toLowerCase();
+---
+
+<li class="feed-row" data-search={haystack}>
+  <div class="feed-when">
+    {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
+    <span class="kind">{kind}</span>
+  </div>
+  <div class="feed-body">
+    <h3 class="feed-title"><a href={href}>{title}</a></h3>
+    {description && <p class="feed-desc">{description}</p>}
+    {
+      (tags.length > 0 || status === 'in-progress') && (
+        <ul class="chips" aria-label="Tags">
+          {status === 'in-progress' && (
+            <li>
+              <span class="badge">in progress</span>
+            </li>
+          )}
+          {tags.map((tag) => (
+            <li>
+              <a class="chip" href={tagHref(tag)}>
+                #{tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+  <a class="feed-read" href={href} aria-hidden="true" tabindex="-1">./read</a>
+</li>

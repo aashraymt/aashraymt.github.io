@@ -1,0 +1,30 @@
+---
+// Every tag, with the number of pages that carry it.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { tagGroups } from '../../data/content';
+
+const tags = tagGroups(await getCollection('docs'));
+---
+
+<Base title="Tags" description="Every tag used on this site, with the number of pages under each one.">
+  <div class="page">
+    <h1 class="page-title"><span class="glyph" aria-hidden="true">~/</span>tags</h1>
+    <p class="lede">Pick a tag to list the pages that carry it. The full list of pages is on <a href="/posts/">posts</a>.</p>
+    {
+      tags.length > 0 ? (
+        <ul class="chips" aria-label="All tags">
+          {tags.map((tag) => (
+            <li>
+              <a class="chip" href={`/tags/${tag.slug}/`}>
+                #{tag.label} <span class="count">{tag.entries.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="muted">No tags yet.</p>
+      )
+    }
+  </div>
+</Base>

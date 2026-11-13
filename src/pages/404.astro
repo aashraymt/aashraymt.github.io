@@ -1,0 +1,98 @@
+---
+// Not-found page, written as a failed shell command.
+import Base from '../layouts/Base.astro';
+import { site, primaryNav } from '../data/site';
+
+const prompt = `${site.handle}:~$`;
+---
+
+<Base title="Page not found" description="That page does not exist on this site." noindex>
+  <div class="page">
+    <section class="nf" aria-labelledby="nf-title">
+      <p class="nf-line">
+        <span class="ps1" aria-hidden="true">{prompt}</span>
+        <span>cd <span id="nf-path">./that-page</span></span>
+      </p>
+      <h1 id="nf-title">bash: command not found</h1>
+      <p class="nf-text">
+        Error 404. There is no page at this address. It may have moved when I rebuilt the site, or the link has a typo.
+      </p>
+      <p class="nf-line">
+        <span class="ps1" aria-hidden="true">{prompt}</span>
+        <span>ls ~</span>
+      </p>
+      <ul class="nf-links">
+        <li><a href="/">~ (home)</a></li>
+        {
+          primaryNav.map((link) => (
+            <li>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))
+        }
+        <li><a href="/posts/">./posts</a></li>
+      </ul>
+      <p class="js-only">
+        <button type="button" class="btn ghost" data-search-open>Search the site</button>
+      </p>
+    </section>
+  </div>
+
+  <script>
+    // Show the path that was asked for. textContent keeps it inert.
+    const target = document.getElementById('nf-path');
+    if (target) {
+      let path = window.location.pathname;
+      try {
+        path = decodeURI(path);
+      } catch {
+        // Keep the raw path when it is not valid percent-encoding.
+      }
+      target.textContent = '.' + path.replace(/\/$/, '').slice(0, 80);
+    }
+  </script>
+</Base>
+
+<style>
+  .nf {
+    max-width: 44rem;
+    margin: 2rem 0;
+    padding: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .nf-line {
+    margin: 0 0 0.5rem;
+    color: var(--heading);
+    overflow-wrap: anywhere;
+  }
+
+  .ps1 {
+    color: var(--accent-2);
+  }
+
+  .nf h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.3rem, 1rem + 1.5vw, 1.75rem);
+    color: var(--danger);
+  }
+
+  .nf-text {
+    max-width: 60ch;
+    font-family: var(--font-body);
+    font-size: 1rem;
+  }
+
+  .nf-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+  }
+</style>

@@ -1,0 +1,240 @@
+---
+// Pagefind search in a modal. Opened by any [data-search-open] button or the "/" key.
+// The index only exists after `pagefind --site dist`, so the import is done at runtime and may fail.
+---
+
+<dialog id="search" class="search" aria-labelledby="search-label">
+  <div class="search-bar">
+    <label id="search-label" for="search-input"><span aria-hidden="true">$ </span>search</label>
+    <input
+      id="search-input"
+      type="search"
+      placeholder="type a tool, technique, or title"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button type="button" class="icon-btn" id="search-close" aria-label="Close search">esc</button>
+  </div>
+  <p id="search-status" class="search-status" role="status">Type to search.</p>
+  <ol id="search-results" class="search-results"></ol>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('search') as HTMLDialogElement | null;
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const status = document.getElementById('search-status');
+  const list = document.getElementById('search-results');
+  const closeBtn = document.getElementById('search-close');
+  const UNAVAILABLE = 'Search is available on the built site.';
+
+  let pagefind: any = null;
+  let unavailable = false;
+
+  async function loadPagefind() {
+    if (pagefind || unavailable) return;
+    try {
+      // A variable keeps the bundler from trying to resolve a file that only exists after the build.
+      const url = '/pagefind/pagefind.js';
+      pagefind = await import(/* @vite-ignore */ url);
+      if (pagefind.init) await pagefind.init();
+    } catch {
+      pagefind = null;
+      unavailable = true;
+      if (status) status.textContent = UNAVAILABLE;
+    }
+  }
+
+  function openSearch() {
+    if (!dialog || dialog.open) return;
+    dialog.showModal();
+    input?.focus();
+    input?.select();
+    loadPagefind();
+  }
+
+  function renderResults(items: any[], query: string) {
+    if (!list || !status) return;
+    list.replaceChildren();
+    status.textContent =
+      items.length === 0 ? `No results for "${query}".` : `${items.length} result${items.length === 1 ? '' : 's'}`;
+    for (const item of items) {
+      const li = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = item.url;
+
+      const title = document.createElement('span');
+      title.className = 'search-title';
+      title.textContent = (item.meta && item.meta.title) || item.url;
+
+      const excerpt = document.createElement('span');
+      excerpt.className = 'search-excerpt';
+      // Pagefind escapes page text and only adds <mark> around matches.
+      excerpt.innerHTML = item.excerpt || '';
+
+      const path = document.createElement('span');
+      path.className = 'search-path';
+      path.textContent = '~' + String(item.url).replace(/\/$/, '');
+
+      link.append(title, excerpt, path);
+      li.append(link);
+      list.append(li);
+    }
+  }
+
+  async function runSearch() {
+    if (!input || !list || !status) return;
+    const query = input.value.trim();
+    if (!query) {
+      list.replaceChildren();
+      status.textContent = unavailable ? UNAVAILABLE : 'Type to search.';
+      return;
+    }
+    await loadPagefind();
+    if (!pagefind) return;
+    try {
+      const search = await pagefind.debouncedSearch(query, {}, 200);
+      if (search === null) return; // a newer keystroke replaced this search
+      const items = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
+      if (input.value.trim() === query) renderResults(items, query);
+    } catch {
+      status.textContent = UNAVAILABLE;
+    }
+  }
+
+  if (dialog && input) {
+    document.querySelectorAll('[data-search-open]').forEach((btn) => btn.addEventListener('click', openSearch));
+    closeBtn?.addEventListener('click', () => dialog.close());
+    input.addEventListener('input', runSearch);
+
+    // A click on the backdrop lands on the dialog element itself.
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+      const el = event.target as HTMLElement | null;
+      const typing = !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+      if (typing) return;
+      event.preventDefault();
+      openSearch();
+    });
+  }
+</script>
+
+<style is:global>
+  .search {
+    width: min(42rem, calc(100vw - 2rem));
+    max-height: min(36rem, calc(100vh - 4rem));
+    margin-top: 10vh;
+    padding: 0;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .search[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search::backdrop {
+    background: rgb(0 0 0 / 0.6);
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-bar label {
+    flex: none;
+    color: var(--accent);
+  }
+
+  .search-bar input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.4rem 0.25rem;
+    font: inherit;
+    color: var(--heading);
+    background: transparent;
+    border: 0;
+  }
+
+  .search-bar input::placeholder {
+    color: var(--muted);
+    opacity: 1;
+  }
+
+  .search-bar input:focus {
+    outline: none;
+  }
+
+  .search-bar:focus-within {
+    box-shadow: inset 0 -2px 0 var(--accent-2);
+  }
+
+  .search-status {
+    margin: 0;
+    padding: 0.6rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0 0.5rem 0.5rem;
+    overflow-y: auto;
+  }
+
+  .search-results a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.5rem;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: var(--radius);
+  }
+
+  .search-results a:hover,
+  .search-results a:focus-visible {
+    background: var(--surface-2);
+  }
+
+  .search-title {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  .search-excerpt {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .search-excerpt mark {
+    padding: 0 0.1em;
+    color: var(--on-accent);
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .search-path {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-2);
+    overflow-wrap: anywhere;
+  }
+</style>

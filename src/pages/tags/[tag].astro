@@ -1,0 +1,33 @@
+---
+// One page per tag, listing every collection page that carries it.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import FeedRow from '../../components/FeedRow.astro';
+import { tagGroups, type TagGroup } from '../../data/content';
+
+export async function getStaticPaths() {
+  const groups = tagGroups(await getCollection('docs'));
+  return groups.map((group) => ({ params: { tag: group.slug }, props: { group } }));
+}
+
+interface Props {
+  group: TagGroup;
+}
+
+const { group } = Astro.props;
+const total = group.entries.length;
+---
+
+<Base title={`#${group.label}`} description={`Pages tagged ${group.label}.`}>
+  <div class="page">
+    <h1 class="page-title"><span class="glyph" aria-hidden="true">~/tags/</span>{group.label}</h1>
+    <p class="lede">
+      {total}
+      {total === 1 ? 'page' : 'pages'} tagged <span class="mono">#{group.label}</span>. See <a href="/tags/">all tags</a> or
+      <a href="/posts/">all posts</a>.
+    </p>
+    <ol class="feed">
+      {group.entries.map((entry) => <FeedRow entry={entry} />)}
+    </ol>
+  </div>
+</Base>

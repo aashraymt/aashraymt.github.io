@@ -1,0 +1,85 @@
+---
+// Full feed: every writeup, note, project, and post. The filter is an enhancement;
+// without JavaScript the box is hidden and every row stays visible.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import FeedRow from '../../components/FeedRow.astro';
+import { feedEntries, tagGroups } from '../../data/content';
+
+const feed = feedEntries(await getCollection('docs'));
+const tags = tagGroups(feed);
+---
+
+<Base title="Posts" description="Every writeup, note, project page, and post on this site, newest first.">
+  <div class="page">
+    <h1 class="page-title"><span class="glyph" aria-hidden="true">~/</span>posts</h1>
+    <p class="lede">
+      Every writeup, note, project page, and post in one list. Dated entries come first, newest at the top.
+      <a href="/rss.xml">RSS feed</a>.
+    </p>
+
+    <div class="grep-box js-only">
+      <label for="feed-filter">
+        <span class="sr-only">Filter posts by title, description, or tag</span>
+        <span aria-hidden="true"><span class="glyph">$</span> grep -ri "</span>
+      </label>
+      <input id="feed-filter" type="search" placeholder="query" autocomplete="off" spellcheck="false" />
+      <span aria-hidden="true">" ./posts</span>
+    </div>
+    <p class="feed-count" id="feed-count" role="status">{feed.length} entries</p>
+
+    {
+      tags.length > 0 && (
+        <ul class="chips" aria-label="All tags">
+          {tags.map((tag) => (
+            <li>
+              <a class="chip" href={`/tags/${tag.slug}/`}>
+                #{tag.label} <span class="count">{tag.entries.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <section class="section" aria-label="All entries">
+      {
+        feed.length > 0 ? (
+          <ol class="feed" id="feed">
+            {feed.map((entry) => (
+              <FeedRow entry={entry} />
+            ))}
+          </ol>
+        ) : (
+          <p class="muted">Nothing here yet.</p>
+        )
+      }
+      <p class="muted mono" id="feed-empty" hidden>No matches. Try a shorter query or a tag name.</p>
+    </section>
+  </div>
+
+  <script>
+    const input = document.getElementById('feed-filter') as HTMLInputElement | null;
+    const count = document.getElementById('feed-count');
+    const empty = document.getElementById('feed-empty');
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('#feed [data-search]'));
+
+    function applyFilter() {
+      if (!input) return;
+      const query = input.value.trim().toLowerCase();
+      let shown = 0;
+      for (const row of rows) {
+        const hit = !query || (row.dataset.search ?? '').includes(query);
+        row.hidden = !hit;
+        if (hit) shown += 1;
+      }
+      if (count) count.textContent = query ? `${shown} of ${rows.length} match` : `${rows.length} entries`;
+      if (empty) empty.hidden = shown > 0 || rows.length === 0;
+    }
+
+    if (input) {
+      input.addEventListener('input', applyFilter);
+      applyFilter();
+    }
+  </script>
+</Base>

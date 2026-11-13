@@ -1,0 +1,22 @@
+# Private blocklist for scripts/check-content.mjs
+#
+# Copy this file to scripts/blocklist.private.txt (git-ignored) and replace the
+# placeholders with the real terms that must never appear on the site:
+# organization names, product code names, internal hostnames, people's names.
+#
+# Format:
+#   - one term per line
+#   - matching is case-insensitive and matches anywhere in a line or file path
+#   - lines starting with # are comments, blank lines are ignored
+#   - keep terms specific; a short common word will block ordinary sentences
+#
+# The same terms must also be stored, comma separated on one line, in the
+# CONTENT_BLOCKLIST repository secret so the GitHub build checks them too.
+# Example secret value: Placeholder Org One,placeholder-codename,internal.placeholder.example
+#
+# Never put real terms in this example file. It is public.
+
+Placeholder Org One
+Placeholder Org Two
+placeholder-codename
+internal.placeholder.example

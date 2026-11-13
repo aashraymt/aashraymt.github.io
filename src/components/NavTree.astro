@@ -1,0 +1,46 @@
+---
+// Recursive sidebar list. Groups are <details>, so they open and close without JavaScript.
+import { containsHref, type NavNode } from '../data/nav';
+
+interface Props {
+  nodes: NavNode[];
+  current: string;
+  depth?: number;
+}
+
+const { nodes, current, depth = 0 } = Astro.props;
+---
+
+<ul class:list={['nav-tree', `depth-${depth}`]}>
+  {
+    nodes.map((node) => {
+      const hasChildren = !!node.children && node.children.length > 0;
+      const isCurrent = node.href === current;
+      const open = depth === 0 || containsHref(node, current);
+      return (
+        <li>
+          {hasChildren ? (
+            <details open={open}>
+              <summary>
+                {node.href ? (
+                  <a href={node.href} aria-current={isCurrent ? 'page' : undefined}>
+                    {node.label}
+                  </a>
+                ) : (
+                  <span class="nav-label">{node.label}</span>
+                )}
+              </summary>
+              <Astro.self nodes={node.children ?? []} current={current} depth={depth + 1} />
+            </details>
+          ) : node.href ? (
+            <a href={node.href} aria-current={isCurrent ? 'page' : undefined}>
+              {node.label}
+            </a>
+          ) : (
+            <span class="nav-label">{node.label}</span>
+          )}
+        </li>
+      );
+    })
+  }
+</ul>

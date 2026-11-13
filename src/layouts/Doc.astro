@@ -1,0 +1,162 @@
+---
+// Reading layout for every collection page. The rendered Markdown goes in the default slot.
+import type { MarkdownHeading } from 'astro';
+import { getCollection } from 'astro:content';
+import Base from './Base.astro';
+import NavTree from '../components/NavTree.astro';
+import { buildNav, flattenNav } from '../data/nav';
+import { entryHref, entryPath, formatDate, isRoutable, tagHref, type DocEntry } from '../data/content';
+
+interface Props {
+  entry: DocEntry;
+  headings?: MarkdownHeading[];
+}
+
+const { entry, headings = [] } = Astro.props;
+const { title, description, kind, category, tags, date, status } = entry.data;
+const href = entryHref(entry.id);
+
+const entries = (await getCollection('docs')).filter(isRoutable);
+const pageHrefs = new Set(entries.map((e) => entryHref(e.id)));
+const tree = buildNav(entries);
+
+// Previous and next follow sidebar order, and only point at collection pages.
+const sequence = flattenNav(tree).filter((item) => pageHrefs.has(item.href));
+const position = sequence.findIndex((item) => item.href === href);
+const prev = position > 0 ? sequence[position - 1] : undefined;
+const next = position >= 0 && position < sequence.length - 1 ? sequence[position + 1] : undefined;
+
+// Breadcrumb: ~/writeups/active-directory. A segment is a link when a page exists at that path.
+const segments = entryPath(entry.id).split('/');
+const crumbs = segments.map((segment, i) => {
+  const crumbHref = `/${segments.slice(0, i + 1).join('/')}/`;
+  const last = i === segments.length - 1;
+  const linked = !last && (pageHrefs.has(crumbHref) || crumbHref === '/posts/');
+  return { segment, href: linked ? crumbHref : undefined, last };
+});
+
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const showToc = toc.length >= 3;
+const showKind = kind !== 'page' && kind !== 'index';
+const inProgress = status === 'in-progress';
+const hasMeta = showKind || !!category || !!date || tags.length > 0 || inProgress;
+const isArticle = kind === 'writeup' || kind === 'note' || kind === 'post' || kind === 'project';
+---
+
+<Base title={title} description={description} type={isArticle ? 'article' : 'website'}>
+  <NavTree slot="sidebar" nodes={tree} current={href} />
+
+  <div class:list={['doc', { 'has-toc': showToc }]}>
+    <article class="doc-article">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/" aria-label="Home">~</a></li>
+          {
+            crumbs.map((crumb) => (
+              <li>
+                {crumb.href ? (
+                  <a href={crumb.href}>{crumb.segment}</a>
+                ) : (
+                  <span aria-current={crumb.last ? 'page' : undefined}>{crumb.segment}</span>
+                )}
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <header class="doc-header">
+        <h1 data-pagefind-meta="title">{title}</h1>
+        {description && <p class="doc-description">{description}</p>}
+        {
+          hasMeta && (
+            <div class="meta-row">
+              {showKind && <span class="kind">{kind}</span>}
+              {category && <span>{category}</span>}
+              {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
+              {inProgress && <span class="badge">in progress</span>}
+              {tags.length > 0 && (
+                <ul class="chips" aria-label="Tags">
+                  {tags.map((tag) => (
+                    <li>
+                      <a class="chip" href={tagHref(tag)}>
+                        #{tag}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )
+        }
+      </header>
+
+      {
+        showToc && (
+          <details class="toc toc-inline">
+            <summary>On this page</summary>
+            <ul>
+              {toc.map((h) => (
+                <li class={`depth-${h.depth}`}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )
+      }
+
+      <div class="prose" data-pagefind-body>
+        <slot />
+      </div>
+
+      {
+        (prev || next) && (
+          <nav class="pager" aria-label="Previous and next pages">
+            {prev && (
+              <a class="prev" href={prev.href} rel="prev">
+                <span class="dir">&lt; previous</span>
+                <span>{prev.label}</span>
+              </a>
+            )}
+            {next && (
+              <a class="next" href={next.href} rel="next">
+                <span class="dir">next &gt;</span>
+                <span>{next.label}</span>
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </article>
+
+    {
+      showToc && (
+        <nav class="toc toc-side" aria-label="On this page">
+          <p class="toc-title">On this page</p>
+          <ul>
+            {toc.map((h) => (
+              <li class={`depth-${h.depth}`}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+  </div>
+
+  <script>
+    // Put each Markdown table in a scroll container so wide tables never widen the page.
+    document.querySelectorAll('.prose table').forEach((table) => {
+      if (table.closest('.table-wrap')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      wrap.tabIndex = 0;
+      wrap.setAttribute('role', 'region');
+      wrap.setAttribute('aria-label', 'Table, scrolls sideways');
+      table.replaceWith(wrap);
+      wrap.append(table);
+    });
+  </script>
+</Base>

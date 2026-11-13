@@ -1,0 +1,25 @@
+---
+// One page per entry in the docs collection. An index file serves at its folder URL.
+import { getCollection, render } from 'astro:content';
+import Doc from '../layouts/Doc.astro';
+import { entryPath, isRoutable, type DocEntry } from '../data/content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('docs');
+  return entries.filter(isRoutable).map((entry) => ({
+    params: { slug: entryPath(entry.id) },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: DocEntry;
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+
+<Doc entry={entry} headings={headings}>
+  <Content />
+</Doc>

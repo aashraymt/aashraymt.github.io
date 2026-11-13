@@ -1,0 +1,216 @@
+---
+// HTML shell for every page: head tags, header, drawer, footer.
+// A page that fills the "sidebar" slot (Doc.astro) gets a left column on wide screens;
+// on small screens the same element is the slide-in drawer opened from the header.
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import Search from '../components/Search.astro';
+import { site, primaryNav, profileLinks } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const { title, description = site.description, type = 'website', noindex = false } = Astro.props;
+const pageTitle = title ? `${title} | ${site.title}` : `${site.title} | ${site.tagline}`;
+const path = Astro.url.pathname;
+const canonical = new URL(path, Astro.site ?? Astro.url).href;
+const hasSidebar = Astro.slots.has('sidebar');
+const isCurrent = (href: string) => path.startsWith(href);
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.title} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title ?? site.title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      // Runs before first paint so the saved or preferred theme never flashes.
+      (function () {
+        var root = document.documentElement;
+        var theme = null;
+        try {
+          theme = localStorage.getItem('theme');
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        root.setAttribute('data-theme', theme);
+        root.classList.add('js');
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="logo" href="/" aria-label={`${site.title}, home`}>
+          <span aria-hidden="true"
+            >{site.handle.split('@')[0]}<span class="at">@</span>{site.handle.split('@')[1]}<span class="sep">:</span
+            ><span class="path">~</span><span class="sep">$</span></span
+          >
+        </a>
+
+        <nav class="primary-nav" aria-label="Primary">
+          <ul>
+            {
+              primaryNav.map((link) => (
+                <li>
+                  <a href={link.href} aria-current={isCurrent(link.href) ? 'true' : undefined}>
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" class="icon-btn js-only" data-search-open aria-label="Search (press slash)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20l-3.5-3.5"></path>
+            </svg>
+            <kbd aria-hidden="true">/</kbd>
+          </button>
+          <button type="button" class="icon-btn js-only" data-theme-toggle aria-label="Switch between dark and light theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"></path>
+            </svg>
+          </button>
+          <a class="icon-btn menu-btn" href="#drawer" role="button" data-drawer-open aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class:list={['shell', { 'has-sidebar': hasSidebar }]}>
+      <aside class="drawer" id="drawer" aria-label="Site menu">
+        <div class="drawer-head">
+          <span>{site.handle}:~$ ls</span>
+          <a class="icon-btn" href="#main" data-drawer-close aria-label="Close menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+          </a>
+        </div>
+        <nav class="drawer-primary" aria-label="Primary, menu">
+          <ul>
+            {
+              primaryNav.map((link) => (
+                <li>
+                  <a href={link.href} aria-current={isCurrent(link.href) ? 'true' : undefined}>
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+        {
+          hasSidebar && (
+            <nav aria-label="Pages">
+              <slot name="sidebar" />
+            </nav>
+          )
+        }
+      </aside>
+      <a class="drawer-backdrop" href="#main" data-drawer-close aria-label="Close menu" tabindex="-1"></a>
+
+      <main id="main" class="main" tabindex="-1">
+        <slot />
+      </main>
+    </div>
+
+    <footer class="site-footer">
+      <p>
+        {profileLinks.map((link) => <a href={link.href} rel="me noopener">{link.label}</a>)}
+        <span>Built with Astro. <a href={site.repo} rel="noopener">Source on GitHub</a>.</span>
+      </p>
+    </footer>
+
+    <Search />
+
+    <script>
+      const root = document.documentElement;
+
+      // Theme toggle. The choice is saved; the inline script in <head> applies it on the next load.
+      document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          try {
+            localStorage.setItem('theme', next);
+          } catch {
+            // Storage can be blocked. The theme still changes for this page.
+          }
+        });
+      });
+
+      // Drawer. Without scripts the links fall back to #drawer and the CSS :target rule.
+      const drawer = document.getElementById('drawer');
+      const openBtn = document.querySelector('[data-drawer-open]') as HTMLElement | null;
+
+      function setDrawer(open: boolean) {
+        if (!drawer || !openBtn) return;
+        const wasOpen = drawer.hasAttribute('data-open');
+        drawer.toggleAttribute('data-open', open);
+        openBtn.setAttribute('aria-expanded', String(open));
+        openBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        if (open) {
+          const first = drawer.querySelector('a, button') as HTMLElement | null;
+          first?.focus();
+        } else if (wasOpen) {
+          openBtn.focus();
+        }
+      }
+
+      if (drawer && openBtn) {
+        openBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          setDrawer(!drawer.hasAttribute('data-open'));
+        });
+        openBtn.addEventListener('keydown', (event) => {
+          // role="button" on a link: Space should activate it too.
+          if (event.key === ' ') {
+            event.preventDefault();
+            setDrawer(!drawer.hasAttribute('data-open'));
+          }
+        });
+        document.querySelectorAll('[data-drawer-close]').forEach((el) => {
+          el.addEventListener('click', (event) => {
+            event.preventDefault();
+            setDrawer(false);
+          });
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && drawer.hasAttribute('data-open')) setDrawer(false);
+        });
+      }
+    </script>
+  </body>
+</html>

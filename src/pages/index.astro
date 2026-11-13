@@ -1,0 +1,558 @@
+---
+// Landing page. All text about the person comes from ../gitbook-drafts/README.md.
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import FeedRow from '../components/FeedRow.astro';
+import { site, profileLinks } from '../data/site';
+import { feedEntries, entryPath, entryHref, isRoutable } from '../data/content';
+
+const allDocs = await getCollection('docs');
+const latest = feedEntries(allDocs).slice(0, 5);
+
+// Page list for the interactive prompt: path, link, title, one-line description, tags.
+const shellFiles = allDocs
+  .filter(isRoutable)
+  .map((e) => ({
+    p: entryPath(e.id),
+    h: entryHref(e.id),
+    t: e.data.title,
+    d: e.data.description ?? '',
+    g: e.data.tags,
+  }))
+  .filter((f) => f.p)
+  .sort((a, b) => a.p.localeCompare(b.p));
+const shellData = JSON.stringify({
+  handle: site.handle,
+  files: shellFiles,
+  links: profileLinks.map((l) => ({ label: l.label, href: l.href })),
+}).replace(/</g, '\\u003c');
+const prompt = `${site.handle}:~$`;
+
+const focusAreas = [
+  {
+    title: 'Detection engineering',
+    text: 'I like breaking something and then writing the rule that catches it. At Vertiv that meant YARA-L 2.0 in Google SecOps on Defender for Endpoint telemetry.',
+    links: [{ label: 'Detection Engineering', href: '/writeups/detection-engineering/' }],
+  },
+  {
+    title: 'Offensive security',
+    text: 'Web, API, Android, and Active Directory testing. Most of what I know here came from an AppSec internship, retired Hack The Box machines, and a forest-compromise lab I built myself.',
+    links: [
+      { label: 'Web & API Security', href: '/writeups/web-and-api-security/' },
+      { label: 'Active Directory', href: '/writeups/active-directory/' },
+    ],
+  },
+  {
+    title: 'Application security',
+    text: 'Burp Suite, source code review, the OWASP Top 10 and the OWASP API Security Top 10. I also co-delivered a Burp Suite workshop for 40 Cyber@UC members.',
+    links: [{ label: 'API Security notes', href: '/notes/api-security/' }],
+  },
+  {
+    title: 'AI security',
+    text: 'Prompt injection, improper output handling, and function-calling abuse, practiced in HTB Academy and PortSwigger labs.',
+    links: [{ label: 'AI / LLM Security', href: '/writeups/ai-llm-security/' }],
+  },
+];
+
+const featured = [
+  {
+    title: 'Vuln-Firmware Lab',
+    text: 'Four planted memory-corruption bugs in a UART-style C parser. AFL++ found all four in about 90 seconds. libFuzzer stalled on one, and the page explains why.',
+    href: '/projects/vuln-firmware-lab/',
+  },
+  {
+    title: 'When the LLM is the filter',
+    text: 'An HTB Academy lab where the SQL injection defense was another LLM, and how rewording the request got past it.',
+    href: '/writeups/ai-llm-security/llm-output-attacks/',
+  },
+  {
+    title: 'Forest compromise lab',
+    text: 'From a web command injection to the parent domain controller in a lab I built, with the detection opportunities at each stage.',
+    href: '/writeups/active-directory/forest-compromise-lab/',
+  },
+];
+
+const skills = [
+  ['Offensive', 'Burp Suite, Nmap, ffuf, Impacket, CrackMapExec, Ligolo-ng, BloodHound'],
+  [
+    'Detection / SIEM',
+    'Google SecOps (YARA-L 2.0), Microsoft Defender for Endpoint, Microsoft Sentinel (KQL), Elastic Stack, TheHive, MITRE ATT&CK',
+  ],
+  ['AppSec / API', 'OWASP Top 10, OWASP API Security Top 10, source code review, SAST/DAST, Okta SSO, OAuth 2.0, SAML'],
+  ['Binary / Fuzzing', 'AFL++, libFuzzer, GDB, C'],
+  ['Cloud', 'AWS, Azure, GCP (log collection and monitoring labs)'],
+  [
+    'AI security',
+    'Prompt injection, improper output handling, function-calling abuse (HTB Academy and PortSwigger labs)',
+  ],
+  ['Languages', 'Python, Bash, PowerShell, C/C++, SQL'],
+];
+---
+
+<Base>
+  <div class="page" data-pagefind-body>
+    <section class="term" aria-label="About">
+      <div class="term-bar" aria-hidden="true">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="term-title">{site.handle}: ~</span>
+      </div>
+      <div class="term-body">
+        <p class="line">
+          <span class="ps1" aria-hidden="true">{prompt}</span>
+          <span class="cmd" style="--n: 6; --d: 0.1s">whoami</span>
+        </p>
+        <div class="out" style="--d: 0.45s">
+          <h1>{site.title}</h1>
+          <p class="headline">{site.headline}</p>
+        </div>
+
+        <p class="line appear" style="--d: 0.6s">
+          <span class="ps1" aria-hidden="true">{prompt}</span>
+          <span class="cmd" style="--n: 14; --d: 0.7s">cat status.txt</span>
+        </p>
+        <div class="out" style="--d: 1.35s">
+          <p class="status">{site.status}</p>
+        </div>
+
+        <p class="line appear" style="--d: 1.5s">
+          <span class="ps1" aria-hidden="true">{prompt}</span>
+          <span class="cmd" style="--n: 10; --d: 1.6s">ls ./links</span>
+        </p>
+        <div class="out" style="--d: 2.1s">
+          <ul class="links">
+            {
+              profileLinks.map((link) => (
+                <li>
+                  <a href={link.href} rel="me noopener">
+                    {link.label}
+                  </a>
+                  <span class="note">{link.note}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="term-log" id="term-log" aria-live="polite"></div>
+
+        <form class="line appear term-form" id="term-form" style="--d: 2.2s" autocomplete="off">
+          <label class="ps1" id="term-ps1" for="term-input">{prompt}</label>
+          <input
+            class="term-input"
+            id="term-input"
+            type="text"
+            name="cmd"
+            placeholder="type help and press Enter"
+            aria-label="Terminal command. Type help for the list of commands."
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            enterkeyhint="go"
+          />
+        </form>
+        <script type="application/json" id="term-data" set:html={shellData} />
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="glance">
+      <h2 class="section-title" id="glance"><span class="glyph" aria-hidden="true">## </span>At a glance</h2>
+      <ul class="glance">
+        <li>
+          Three security internships in three different areas: detection engineering at Vertiv (2026), identity and SSO
+          at IDamta (2026), and application security at Eminence Ways (2025).
+        </li>
+        <li>
+          At Vertiv I tuned a YARA-L encoded-PowerShell detection (T1059.001) from about 3,794 alerts in 3 days (roughly 1,265 a day) to about 7 a day by separating out legitimate IT automation.
+        </li>
+        <li>At Eminence Ways I found 20+ vulnerabilities (3 Critical, 7 High) in web and Android applications.</li>
+        <li>
+          Certified: CompTIA Security+, Certified API Red Team Analyst, Certified AppSec Practitioner, Multi-Cloud Blue
+          Team Analyst, OCI Generative AI Professional. Each one has a verify link on the
+          <a href="/certifications/">Certifications</a> page.
+        </li>
+        <li>
+          Flagship project: <a href="/projects/vuln-firmware-lab/">Vuln-Firmware Lab</a>, a deliberately vulnerable C
+          command parser that I fuzzed with libFuzzer and AFL++.
+        </li>
+        <li>Cyber@UC CTF team since August 2024. National Cyber League Fall 2025 team game: top 7%.</li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="work">
+      <h2 class="section-title" id="work"><span class="glyph" aria-hidden="true">## </span>What I work on</h2>
+      <div class="focus">
+        {
+          focusAreas.map((area) => (
+            <div class="focus-item">
+              <h3>{area.title}</h3>
+              <p>{area.text}</p>
+              <ul>
+                {area.links.map((link) => (
+                  <li>
+                    <span aria-hidden="true">cd </span>
+                    <a href={link.href} aria-label={link.label}>
+                      .{link.href.replace(/\/$/, '')}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="featured">
+      <h2 class="section-title" id="featured"><span class="glyph" aria-hidden="true">## </span>Featured work</h2>
+      <div class="cards">
+        {
+          featured.map((item) => (
+            <a class="card" href={item.href}>
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="latest" data-pagefind-ignore>
+      <h2 class="section-title" id="latest"><span class="glyph" aria-hidden="true">## </span>Latest</h2>
+      {
+        latest.length > 0 ? (
+          <ol class="feed">
+            {latest.map((entry) => (
+              <FeedRow entry={entry} />
+            ))}
+          </ol>
+        ) : (
+          <p class="muted">Nothing here yet.</p>
+        )
+      }
+      <a class="more-link" href="/posts/">ls ./posts</a>
+    </section>
+
+    <section class="section" aria-labelledby="skills">
+      <h2 class="section-title" id="skills"><span class="glyph" aria-hidden="true">## </span>Skills</h2>
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="skills">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Domain</th>
+              <th scope="col">Tools and techniques I have used</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              skills.map(([domain, tools]) => (
+                <tr>
+                  <th scope="row">{domain}</th>
+                  <td>{tools}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="disclosure">
+      <h2 class="section-title" id="disclosure"><span class="glyph" aria-hidden="true">## </span>Disclosure</h2>
+      <p class="plain">
+        Coordinated vulnerability disclosure: responsibly reported authentication and application-layer issues to
+        organizations; details withheld under disclosure agreements.
+      </p>
+    </section>
+
+    <section class="section" aria-labelledby="contact">
+      <h2 class="section-title" id="contact"><span class="glyph" aria-hidden="true">## </span>Contact</h2>
+      <p class="plain">
+        LinkedIn is the fastest way to reach me:
+        <a href="https://www.linkedin.com/in/aashray-tuladhar/" rel="me noopener">linkedin.com/in/aashray-tuladhar</a>.
+        More on the <a href="/contact/">Contact</a> page.
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  /* Terminal window. Everything is real text; the animation only delays when it appears. */
+  .term {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+
+  .dot:first-child {
+    background: var(--accent);
+  }
+
+  .term-title {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .term-body {
+    padding: 0.9rem 1rem 1rem;
+  }
+
+  .line {
+    margin: 0;
+    color: var(--heading);
+  }
+
+  .ps1 {
+    color: var(--accent-2);
+  }
+
+  .cmd {
+    display: inline-block;
+    width: calc(var(--n) * 1ch);
+    overflow: hidden;
+    white-space: nowrap;
+    vertical-align: bottom;
+    animation: hero-type calc(var(--n) * 40ms) steps(var(--n)) var(--d) both;
+  }
+
+  .appear,
+  .out {
+    animation: hero-appear 0.15s linear var(--d) both;
+  }
+
+  .out {
+    margin: 0.15rem 0 0.75rem;
+  }
+
+  .out h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 1.1rem + 2vw, 2.1rem);
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  .headline {
+    margin: 0.15rem 0 0;
+    max-width: 70ch;
+    color: var(--heading);
+  }
+
+  .status {
+    margin: 0;
+    max-width: 78ch;
+    padding-left: 0.75rem;
+    color: var(--text);
+    border-left: 3px solid var(--success);
+  }
+
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.5rem), 1fr));
+    gap: 0.35rem 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .links a {
+    font-weight: 700;
+  }
+
+  .links a::after {
+    content: '/';
+    color: var(--muted);
+  }
+
+  .note {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.1em;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    animation: hero-blink 1.1s steps(1) infinite;
+  }
+
+  @keyframes hero-type {
+    from {
+      width: 0;
+    }
+  }
+
+  @keyframes hero-appear {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes hero-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cmd,
+    .appear,
+    .out,
+    .cursor {
+      animation: none;
+    }
+  }
+
+  /* Sections below the terminal. */
+  .glance {
+    max-width: 80ch;
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .glance li {
+    margin-bottom: 0.5rem;
+  }
+
+  .glance li::marker {
+    content: '> ';
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+
+  .focus {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 0.75rem;
+  }
+
+  .focus-item {
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .focus-item h3 {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+  }
+
+  .focus-item p {
+    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .focus-item ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .focus-item li {
+    overflow-wrap: anywhere;
+  }
+
+  .plain {
+    max-width: 72ch;
+  }
+</style>
+
+<script>
+  import '../scripts/shell.ts';
+</script>
+
+<style is:global>
+  /* Interactive prompt in the landing terminal. Global because the output rows are created by script. */
+  .term-form {
+    display: flex;
+    align-items: baseline;
+    gap: 1ch;
+    margin: 0;
+  }
+  .term-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--heading);
+    caret-color: var(--accent);
+    font: inherit;
+  }
+  .term-input::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+  }
+  .term-log {
+    max-height: 22rem;
+    overflow-y: auto;
+  }
+  .term-log:empty {
+    display: none;
+  }
+  .term-out {
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .term-echo {
+    margin-top: 0.35rem;
+    color: var(--heading);
+  }
+  .ps1-echo {
+    color: var(--accent-2);
+  }
+  .term-row {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 2ch;
+  }
+  .term-key {
+    min-width: 22ch;
+    color: var(--accent);
+  }
+  .term-link {
+    color: var(--accent);
+  }
+  .term-note,
+  .term-dim {
+    color: var(--muted);
+  }
+  .term-err {
+    color: var(--danger);
+  }
+  .term-title-line {
+    color: var(--heading);
+    font-weight: 700;
+  }
+</style>

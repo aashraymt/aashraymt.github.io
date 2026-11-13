@@ -1,0 +1,65 @@
+name: Build and deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 10 * * *' # once a day (UTC), picks up newly Published Notion rows
+
+# Default for every job: read the repo and nothing else.
+permissions:
+  contents: read
+
+# One Pages deployment at a time. Do not cancel a deploy that is already running.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The synced Markdown and images are NOT committed back to the repo. They
+      # exist only inside this build. That keeps the private-to-public step in
+      # one place (Notion "Published" plus the content check below) and avoids
+      # bot commits in the history. Unpublishing in Notion removes the page on
+      # the next run because nothing synced is ever stored in git.
+      - name: Sync published posts from Notion
+        run: npm run sync:notion
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+
+      # `npm run build` runs scripts/check-content.mjs first, then astro build,
+      # then pagefind. A failed content check stops here and nothing is deployed.
+      - name: Check content and build
+        run: npm run build
+        env:
+          CONTENT_BLOCKLIST: ${{ secrets.CONTENT_BLOCKLIST }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write # publish to GitHub Pages
+      id-token: write # prove the deployment comes from this workflow
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
