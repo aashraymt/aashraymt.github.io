@@ -179,5 +179,4 @@ To preview Notion posts locally, set `NOTION_TOKEN` and `NOTION_DATABASE_ID` in 
 - Do not repeat the title as a heading. Body headings start at `##`.
 - Sidebar order and grouping are in `src/data/nav.ts`. New pages that are not listed there are added under their section automatically.
 - The landing page is `src/pages/index.astro`.
-- `SPEC.md` has the full conventions for callouts, cards, links, and voice.
 - Commit and push to `main`. The push starts a build and the change is live in a few minutes.
