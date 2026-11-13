@@ -1,22 +1,23 @@
-// Safety check for everything a visitor can read. Scans every .md file under
-// src/content/docs and exits 1 if a line looks like private or sensitive data.
-// No dependencies. Runs first in `npm run build`, so a failure blocks the deploy.
-//
-// Output is `file:line  rule` only. The matching text is never printed, because
-// the build log of a public repository is public too.
-//
-// To accept one line on purpose, put <!-- check:allow --> on that line.
-// Private terms (organization names and so on) come from
-// scripts/blocklist.private.txt and/or the CONTENT_BLOCKLIST environment variable.
-
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
+import { decode } from 'he';
+import { parse } from 'parse5';
+import sharp from 'sharp';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DOCS = join(ROOT, 'src', 'content', 'docs');
 const BLOCKLIST_FILE = join(ROOT, 'scripts', 'blocklist.private.txt');
-const ALLOW_MARKER = '<!-- check:allow -->';
+const DIST = join(ROOT, 'dist');
+
+function normalize(value) {
+  const decoded = value.replace(/(?:%[0-9a-f]{2})+/gi, (match) => {
+    try { return decodeURIComponent(match); } catch { return match; }
+  });
+  return decode(decoded).normalize('NFKC').replace(/\p{Cf}/gu, '').replace(/\s+/g, ' ').toLowerCase();
+}
 
 // ---------- blocklist ----------
 
@@ -24,12 +25,21 @@ const blocklist = [
   ...(existsSync(BLOCKLIST_FILE) ? readFileSync(BLOCKLIST_FILE, 'utf8').split(/\r?\n/) : []).filter(
     (line) => !line.trim().startsWith('#'),
   ),
-  ...(process.env.CONTENT_BLOCKLIST ?? '').split(','),
+  ...(process.env.CONTENT_BLOCKLIST ?? '').split(/[,\r\n]+/),
 ]
-  .map((term) => term.trim().toLowerCase())
+  .map((term) => normalize(term).trim())
   .filter(Boolean);
 
-const hasBlockedTerm = (text) => blocklist.some((term) => text.toLowerCase().includes(term));
+if (process.env.REQUIRE_CONTENT_BLOCKLIST === '1' && blocklist.length === 0) {
+  console.error('Production content check requires a configured private blocklist.');
+  process.exit(1);
+}
+
+const hasBlockedTerm = (text) => {
+  if (!blocklist.length) return false;
+  const normalized = normalize(text);
+  return blocklist.some((term) => normalized.includes(term));
+};
 
 // ---------- IPv4 helpers ----------
 
@@ -38,11 +48,10 @@ const IPV4 = /(?<![\w.])\d{1,3}(?:\.\d{1,3}){3}(?!\w|\.\d)/g;
 
 // Four-part software version numbers that look like addresses. Each one was
 // reviewed by hand; add a new one here only after checking it is a version.
-const REVIEWED_VERSIONS = new Set(['6.3.0.1', '6.3.0.2']); // Apache Struts2 releases
+const STRUTS_VERSION = /(?:<struts2\.version>|struts2\.version set to |Apache Struts2 |the advisory covers )6\.3\.0\.[12]\b/g;
 
 const ipv4s = (line) =>
   [...line.matchAll(IPV4)]
-    .filter((m) => !REVIEWED_VERSIONS.has(m[0]))
     .map((m) => m[0].split('.').map(Number))
     .filter((octets) => octets.every((n) => n <= 255));
 
@@ -70,7 +79,9 @@ const LONG_HEX = /(?<![0-9A-Za-z])(?:0x)?[0-9a-fA-F]{32,}(?![0-9A-Za-z])/g;
 function insideUrl(line, match) {
   const start = line.lastIndexOf(' ', match.index) + 1;
   const end = line.indexOf(' ', match.index);
-  return line.slice(start, end === -1 ? line.length : end).includes('://');
+  const token = line.slice(start, end === -1 ? line.length : end);
+  if (/\]\(https:\/\/catalog-education\.oracle\.com\/ords\/certview\/sharebadge\?id=[a-f0-9]+\)$/i.test(token)) return true;
+  return /^\[.*\]\(https?:\/\/|^\(?https?:\/\//i.test(token) && !/[?#]/.test(token);
 }
 
 // ---------- rules ----------
@@ -90,7 +101,6 @@ const RULES = [
   ['private key header', (line) => line.includes('-----BEGIN')],
   ['Slack token', (line) => /xox[bap]-/.test(line)],
   ['GitHub token', (line) => /\b(?:gh[pousr]_|github_pat_)\w/.test(line)],
-  ['blocklisted term', (line) => hasBlockedTerm(line)],
 ];
 
 // ---------- scan ----------
@@ -101,7 +111,9 @@ function checkFile(file) {
   const frontmatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   const notion = !!frontmatter && /^source:\s*["']?notion["']?\s*$/m.test(frontmatter[1]);
   const problems = [];
-  if (hasBlockedTerm(name)) problems.push(`${name}:1  blocklisted term in the file path`);
+  const locator = safePath(name, notion);
+  if (hasBlockedTerm(name)) problems.push(`${locator}:1  blocklisted term in the file path`);
+  if (hasBlockedTerm(text)) problems.push(`${locator}:1  blocklisted term in source`);
 
   let fence = null; // the marker that opened the current code fence, if any
   text.split(/\r?\n/).forEach((line, index) => {
@@ -112,29 +124,67 @@ function checkFile(file) {
     } else if (marker) {
       fence = marker;
     }
-    if (line.includes(ALLOW_MARKER)) return;
+    const checked = name === 'src/content/docs/writeups/web-and-api-security/htb-strutted.md'
+      ? line.replace(STRUTS_VERSION, '') : line;
     for (const [label, test] of RULES) {
-      if (test(line, { notion, inFence })) problems.push(`${name}:${index + 1}  ${label}`);
+      if (test(checked, { notion, inFence })) problems.push(`${locator}:${index + 1}  ${label}`);
     }
   });
   return problems;
 }
 
-const files = existsSync(DOCS)
-  ? readdirSync(DOCS, { recursive: true })
-      .filter((name) => name.endsWith('.md'))
-      .map((name) => join(DOCS, name))
-      .sort()
-  : [];
-const problems = files.flatMap(checkFile);
+function safePath(path, forceOpaque = false) {
+  if (!process.env.CI && !forceOpaque && !hasBlockedTerm(path) && /^[\w/.-]+$/.test(path)) return path;
+  return `file ${createHash('sha256').update(path).digest('hex').slice(0, 12)}`;
+}
+
+function renderedText(node) {
+  if (node.nodeName === '#text') return node.value;
+  if (node.tagName === 'style' || node.tagName === 'script') return '';
+  const block = /^(?:p|div|li|td|th|br|h[1-6]|section|main|pre|article)$/.test(node.tagName ?? '');
+  const children = (node.childNodes ?? []).map(renderedText).join('');
+  return block ? ` ${children} ` : children;
+}
+
+async function checkOutput(file) {
+  const name = relative(ROOT, file).replaceAll('\\', '/');
+  const locator = safePath(name);
+  if (hasBlockedTerm(name)) return [`${locator}  blocklisted term in public path`];
+  if (/\.(?:png|jpe?g|webp|gif|avif)$/i.test(name)) {
+    try {
+      const { exif, iptc, xmp, comments } = await sharp(file).metadata();
+      const fields = [exif, iptc, xmp, ...((comments ?? []).map(({ text }) => text))];
+      if (fields.some((field) => field && hasBlockedTerm(field.toString()))) {
+        return [`${locator}  blocklisted term in image metadata`];
+      }
+      if (name.startsWith('dist/notion/') && fields.some(Boolean)) {
+        return [`${locator}  unexpected metadata in imported image`];
+      }
+    } catch {
+      return [`${locator}  unreadable public image metadata`];
+    }
+  } else if (/\.(?:html|xml|svg|txt|json|js|css|map|pf_fragment|pf_meta|pf_index)$/.test(name)) {
+    const bytes = readFileSync(file);
+    const text = (name.includes('.pf_') ? gunzipSync(bytes) : bytes).toString('utf8');
+    if (hasBlockedTerm(text) || (name.endsWith('.html') && hasBlockedTerm(renderedText(parse(text))))) {
+      return [`${locator}  blocklisted term in public output`];
+    }
+  }
+  return [];
+}
+
+const output = process.argv.includes('--dist');
+const directory = output ? DIST : DOCS;
+const files = readdirSync(directory, { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile() && (output || entry.name.endsWith('.md')))
+  .map((entry) => join(entry.parentPath, entry.name)).sort();
+const problems = [];
+for (const file of files) problems.push(...(output ? await checkOutput(file) : checkFile(file)));
 
 if (problems.length === 0) {
   console.log(`Content check passed: ${files.length} files, ${blocklist.length} blocklist terms.`);
 } else {
   console.error(problems.join('\n'));
-  console.error(
-    `\nContent check failed: ${problems.length} problem(s). Fix each line, ` +
-      `or add ${ALLOW_MARKER} to a line you have reviewed and want to keep.`,
-  );
+  console.error(`Content check failed: ${problems.length} problem(s).`);
   process.exit(1);
 }

@@ -11,8 +11,6 @@ source: repo
 
 This is the one item on the list that is about the API consumer rather than the provider. It is a trust problem. Data from a third-party API should be treated with the same suspicion as end-user input, meaning little to no trust. If the third party is compromised, the connection back to the consumer becomes a new path for the attacker, and an organization that consumes that data insecurely can be compromised through it.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2F3dbLK3ueCyqe9LQQd7tQ%2Fimage.png?alt=media&amp;token=9c11004d-5465-4152-9a5d-43afe1689310" alt=""><figcaption></figcaption></figure>
-
 ## Why it happens
 
 Exploiting it means identifying the services the target API integrates with and possibly compromising them. That information is often not public, and the integrated service is often not easy to exploit. Developers tend to trust and not verify the endpoints that talk to external APIs, with weaker requirements for transport security, authentication and authorization, and input validation. The impact depends on what the API does with the pulled data: sensitive information exposure, many kinds of injection, or denial of service.

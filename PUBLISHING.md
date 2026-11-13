@@ -9,16 +9,18 @@ The site is an Astro static site hosted on GitHub Pages. Content comes from two 
 1. **Repo-owned pages.** Markdown files in `src/content/docs/` that you edit and commit. Experience, projects, existing writeups, notes, and certifications live here.
 2. **Notion posts.** Rows in one Notion database called "Site Posts". Only rows with Status set to Published are pulled in.
 
+Repository Markdown with `status: in-progress` is excluded from the generated site, navigation, and indexes. Keep private drafts outside this public repository.
+
 Every build runs these steps on GitHub, in this order:
 
 1. `scripts/sync-notion.mjs` copies Published rows into `src/content/docs/` as Markdown and downloads their images into `public/notion/`.
 2. `scripts/check-content.mjs` scans every Markdown file for private or sensitive content. If it finds anything, the build stops and the live site stays as it was.
 3. Astro builds the pages and Pagefind builds the search index.
-4. GitHub Pages deploys the result.
+4. The content checker scans public output, search data, and image metadata. GitHub Pages deploys only after it passes.
 
 The synced Notion files are never committed to the repo. They exist only inside the build. Notion stays the single source for those posts, and unpublishing there is enough to remove a page.
 
-A build starts when you push to `main`, once a day on a schedule, and whenever you press "Run workflow".
+A deployment build starts after changes land on `main`, once a day on a schedule, and when you run the workflow on `main`. Pull requests run the build and public checks without private secrets or deployment.
 
 ## One-time setup
 
@@ -30,6 +32,7 @@ In Notion, create a new full-page database named **Site Posts** with exactly the
 |---|---|---|
 | Title | Title | The default title column. You can leave it named "Name". |
 | Status | Select | `Draft`, `Published`. Use a plain Select, not Notion's built-in Status type. |
+| Images Reviewed | Checkbox | Required for posts that contain uploaded images. Check again after changing any image. |
 | Section | Select | `Post`, `Writeup`, `Note`, `Project` |
 | Category | Select | `Web & API Security`, `Active Directory`, `AI / LLM Security`, `Detection Engineering`, `Binary & Firmware` |
 | Slug | Text | Optional. The last part of the URL. Left empty, it is made from the title. |
@@ -71,7 +74,7 @@ In the GitHub repo: **Settings, Secrets and variables, Actions, New repository s
 | `NOTION_DATABASE_ID` | The 32 character id in the database URL, between the last `/` and `?v=`. |
 | `CONTENT_BLOCKLIST` | Comma separated terms that must never appear on the site, such as organization names. Example shape: `Name One,Name Two,codename`. |
 
-The blocklist lives in a secret so the list of private names never sits in the public repo.
+The blocklist lives in a secret and production builds fail if it is empty.
 
 ### 5. Turn on GitHub Pages
 
@@ -81,7 +84,7 @@ The site is configured for `https://aashraymt.github.io/`, so the repo must be n
 
 ### 6. Commit a lockfile
 
-The workflow uses `npm ci`, which needs `package-lock.json`. Install Node 20 or newer, run `npm install` once in this folder, and commit the `package-lock.json` it creates.
+The workflow uses Node 24 and `npm ci --ignore-scripts`, which needs `package-lock.json`. Commit the updated lockfile whenever dependencies change.
 
 ## The publishing routine
 
@@ -98,7 +101,7 @@ Writing tips that keep the build green:
 
 - Use Notion's code block for commands and output, and pick the language.
 - Callout blocks become the site's callout boxes. A red callout is "danger", yellow or orange is "warning", green is "success", anything else is "info".
-- Images are copied into the site at build time, so pasted screenshots work. Check every screenshot for names, hostnames, and addresses before you publish.
+- Upload PNG, JPEG, GIF, or WebP images directly to Notion. Review each for names, hostnames, addresses, and credentials, then check **Images Reviewed**. Sync converts uploads to PNG and keeps the first frame of animations. External images and synced blocks are excluded.
 - Do not type em dashes or en dashes. The check rejects them.
 
 ## How to unpublish
@@ -121,17 +124,13 @@ Set Status back to `Draft` (or delete the row), then run the workflow or wait fo
 
 ### Reading a failed run
 
-Open **Actions**, click the failed run, open the **build** job, and expand "Check content and build". You will see lines like this:
+Open **Actions**, click the failed run, open **Build and check content**, and expand the failed check. Public logs identify documents by an opaque file ID and report the rule and source line when available.
 
 ```text
-src/content/docs/posts/my-post.md:42  email address
+file 0123456789ab:42  email address
 ```
 
-That is the file, the line number, and the rule. The matching text is not printed on purpose, because the log is public.
-
-For a Notion post, the file path tells you which post it is; fix the text in Notion and run the workflow again. To see the exact line, run the sync and the check locally (see below). For a repo-owned page, fix the file and push.
-
-If you have reviewed a line and it is safe, add `<!-- check:allow -->` to the end of that line. Use it rarely. It does not work well inside code blocks, because the marker would show up in the code.
+Run the check locally to see repository paths. For a Notion post, run sync and the check locally with your private configuration. Inline allow markers are no longer supported.
 
 If "Sync published posts from Notion" is the step that failed, the integration could not read the database or a page failed to convert. Check that the database is still shared with the integration and that both Notion secrets are correct.
 
@@ -151,7 +150,7 @@ Keep Site Posts for finished public writing only. Private notes belong in a diff
 
 ## Running the site locally
 
-You need Node 20 or newer.
+Use Node 24.
 
 ```bash
 npm install

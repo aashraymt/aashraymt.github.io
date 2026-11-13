@@ -34,4 +34,4 @@ Writing a rule is the quick part. Most of the work is finding out what normal lo
 
 ## Related writeups
 
-My public detection work is in [Detection Engineering](/writeups/detection-engineering/).
+My public detection work includes [a multi-cloud log pipeline](/writeups/detection-engineering/multi-cloud-log-pipeline/).

@@ -87,7 +87,7 @@ sshpass -p '<redacted>' ssh -o StrictHostKeyChecking=no james@strutted.htb
 
 ![Terminal as james running sudo tcpdump with the -z script, then launching the SUID bash copy with -p](/images/writeups/htb-strutted/15.png)
 
-![Root shell in /root listing root.txt, with the flag value blurred](/images/writeups/htb-strutted/16.png)
+![Root shell in /root listing root.txt, with the flag value redacted](/images/writeups/htb-strutted/16.png)
 
 HTB then marked the machine as pwned on my account.
 

@@ -90,7 +90,7 @@ best_model = grid_search.best_estimator_
 
 Against held-out sample messages the model gave calibrated-looking probabilities: around 1.00 on blatant phishing lures, about 0.96 on a subtler account-compromise message, and around 1.00 on ordinary safe texts.
 
-<figure><img src="https://github.com/user-attachments/assets/0947560e-e219-4685-8024-893255865689" alt="Model classifying sample messages with probability scores"><figcaption></figcaption></figure>
+<p><a href="https://github.com/user-attachments/assets/0947560e-e219-4685-8024-893255865689" rel="noreferrer">Model classifying sample messages with probability scores</a></p>
 
 The `predict_proba` output is the useful part for security work: a confidence score, not a yes/no. In a real pipeline you might auto-block the 99% cases and send the 70% cases to a human. The trained pipeline serializes to a `.joblib` file so it can be loaded and used without retraining.
 

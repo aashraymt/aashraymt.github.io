@@ -23,8 +23,8 @@ export function entryHref(id: string): string {
   return path ? `/${path}/` : '/';
 }
 
-export function isRoutable(entry: { id: string }): boolean {
-  return !RESERVED_PATHS.has(entryPath(entry.id));
+export function isRoutable(entry: { id: string; data: Pick<DocEntry['data'], 'status'> }): boolean {
+  return entry.data.status === 'published' && !RESERVED_PATHS.has(entryPath(entry.id));
 }
 
 /** Dated entries first, newest first. Undated entries follow, by order and then title. */

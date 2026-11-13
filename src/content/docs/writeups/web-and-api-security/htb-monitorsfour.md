@@ -69,9 +69,9 @@ I first probed the `/user` endpoint to see how it handled the token parameter.
 
 Supplying a `0e`-form token to the `/user` endpoint bypassed token validation and dumped the user table: usernames, emails, roles, and MD5-hashed passwords. I cracked the MD5 hash for the `admin` account offline to recover its plaintext password (redacted).
 
-![User table dump showing usernames, emails, roles, and MD5 password hashes](/images/writeups/htb-monitorsfour/11.png)
+![Lab user table dump with account records and hashes redacted](/images/writeups/htb-monitorsfour/11.png)
 
-![Online MD5 reverse tool with the admin hash entered and the recovered plaintext blurred](/images/writeups/htb-monitorsfour/12.png)
+![Online MD5 reverse tool with the lab hash and recovered plaintext redacted](/images/writeups/htb-monitorsfour/12.png)
 
 ### Remote code execution: CVE-2025-24367
 

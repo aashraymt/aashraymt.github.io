@@ -29,11 +29,7 @@ When testing, look for anything an attacker could use: altering user accounts, d
 
 In this request the DELETE method is used in place of PUT.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FakTrJf0jf7naa6ql54b1%2Fimage.png?alt=media&amp;token=bb79798c-91c6-490a-8639-98c8b13f946a" alt=""><figcaption></figcaption></figure>
-
 The response says "This is an admin function. Try to access the admin API". That points the attacker to an admin path in the DELETE request (`/identity/api/v2/admin/videos/758`).
-
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FEDytwRYo0Gmjqw0Qfhzo%2Fimage.png?alt=media&amp;token=b03489da-3f10-4eea-9b6e-8f191639c3f9" alt=""><figcaption></figcaption></figure>
 
 The admin path and method had no authorization controls, so the request succeeded.
 
