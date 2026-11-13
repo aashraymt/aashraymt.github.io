@@ -78,8 +78,6 @@ headers...
 
 After sending the request, check the third-party site for new requests. If one arrived from the API's server, the API is vulnerable to out-of-band SSRF.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FDFAfUaSJBOW9jwTwLiPt%2Fimage.png?alt=media&amp;token=4db09aeb-6ba3-4b68-b2cc-28c6d6477d21" alt=""><figcaption></figcaption></figure>
-
 ## Mitigation
 
 * Isolate the resource-fetching mechanism in your network, since these features are meant to retrieve remote resources, not internal ones.

@@ -63,9 +63,9 @@ The exception message is theatrical. The bug is not memory corruption. It is a m
 
 The fuzzer triggered the planted exception in generation 0, through a dictionary replacement, and wrote out the input that caused it.
 
-<figure><img src="https://github.com/user-attachments/assets/40da68ba-ed99-4edf-a6f0-0fce4d16a8d6" alt="Fuzzer output next to the API console at the moment of the crash"><figcaption>Left: the fuzzer reporting the crash. Right: the API throwing the exception.</figcaption></figure>
+<p><a href="https://github.com/user-attachments/assets/40da68ba-ed99-4edf-a6f0-0fce4d16a8d6" rel="noreferrer">Left: the fuzzer reporting the crash. Right: the API throwing the exception.</a></p>
 
-<figure><img src="https://github.com/user-attachments/assets/dc1cefd5-e95b-4815-9290-f6103ab8a955" alt="The crashing input saved by the fuzzer"><figcaption>The input the fuzzer saved for the crash.</figcaption></figure>
+<p><a href="https://github.com/user-attachments/assets/dc1cefd5-e95b-4815-9290-f6103ab8a955" rel="noreferrer">The input the fuzzer saved for the crash.</a></p>
 
 What this shows, and what it does not:
 

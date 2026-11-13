@@ -3,6 +3,8 @@ name: Build and deploy site
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: '23 10 * * *' # once a day (UTC), picks up newly Published Notion rows
@@ -11,23 +13,30 @@ on:
 permissions:
   contents: read
 
+env:
+  ASTRO_TELEMETRY_DISABLED: '1'
+
 # One Pages deployment at a time. Do not cancel a deploy that is already running.
 concurrency:
-  group: pages
+  group: ${{ github.event_name == 'pull_request' && github.ref || 'pages' }}
   cancel-in-progress: false
 
 jobs:
   build:
+    name: Build and check content
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 20
-          cache: npm
+          persist-credentials: false
 
-      - run: npm ci
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=moderate
 
       # The synced Markdown and images are NOT committed back to the repo. They
       # exist only inside this build. That keeps the private-to-public step in
@@ -35,23 +44,33 @@ jobs:
       # bot commits in the history. Unpublishing in Notion removes the page on
       # the next run because nothing synced is ever stored in git.
       - name: Sync published posts from Notion
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run sync:notion
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
 
-      # `npm run build` runs scripts/check-content.mjs first, then astro build,
-      # then pagefind. A failed content check stops here and nothing is deployed.
-      - name: Check content and build
-        run: npm run build
+      - name: Check source before building
+        run: npm run check:content
         env:
-          CONTENT_BLOCKLIST: ${{ secrets.CONTENT_BLOCKLIST }}
+          CONTENT_BLOCKLIST: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && secrets.CONTENT_BLOCKLIST || '' }}
+          REQUIRE_CONTENT_BLOCKLIST: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && '1' || '0' }}
 
-      - uses: actions/upload-pages-artifact@v3
+      - run: npm run build:site
+
+      - name: Check public output
+        run: npm run check:dist
+        env:
+          CONTENT_BLOCKLIST: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && secrets.CONTENT_BLOCKLIST || '' }}
+          REQUIRE_CONTENT_BLOCKLIST: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && '1' || '0' }}
+
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           path: dist
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -62,4 +81,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

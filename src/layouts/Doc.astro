@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { entry, headings = [] } = Astro.props;
-const { title, description, kind, category, tags, date, status } = entry.data;
+const { title, description, kind, category, tags, date } = entry.data;
 const href = entryHref(entry.id);
 
 const entries = (await getCollection('docs')).filter(isRoutable);
@@ -38,8 +38,7 @@ const crumbs = segments.map((segment, i) => {
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const showToc = toc.length >= 3;
 const showKind = kind !== 'page' && kind !== 'index';
-const inProgress = status === 'in-progress';
-const hasMeta = showKind || !!category || !!date || tags.length > 0 || inProgress;
+const hasMeta = showKind || !!category || !!date || tags.length > 0;
 const isArticle = kind === 'writeup' || kind === 'note' || kind === 'post' || kind === 'project';
 ---
 
@@ -74,7 +73,6 @@ const isArticle = kind === 'writeup' || kind === 'note' || kind === 'post' || ki
               {showKind && <span class="kind">{kind}</span>}
               {category && <span>{category}</span>}
               {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
-              {inProgress && <span class="badge">in progress</span>}
               {tags.length > 0 && (
                 <ul class="chips" aria-label="Tags">
                   {tags.map((tag) => (

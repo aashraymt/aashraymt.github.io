@@ -21,8 +21,6 @@ Old versions are more likely to hold vulnerabilities because nobody patches them
 
 Testing can start from outdated documentation, changelogs, and version history in repositories. If the docs mention `apiv1.org/admin` while the API now uses `apiv3.org/admin`, it is worth checking whether v1 and v2 still respond. A changelog may even say why v1 was retired, which points at weaknesses to test for. Versions often appear in paths (`/v1/`, `/v2/`, `/v3/`), and APIs still in development often use `/alpha/`, `/beta/`, `/test/`, `/uat/`, and `/demo/`.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FqLoIRx91UFh74rmcPl1E%2Fimage.png?alt=media&amp;token=81416bdc-2f77-4a02-82d9-e49b1cf3c64d" alt=""><figcaption></figcaption></figure>
-
 Without documentation, guessing, fuzzing, and brute force can also reveal older and non-production versions. Newer versions usually appear on a new path:
 
 * `api.target.com/v3`

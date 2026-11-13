@@ -17,8 +17,6 @@ The authentication mechanism is exposed to everyone, so it is an easy target, an
 
 Authentication is often one of the first lines of defense for an API, so a weakness here can turn straight into a data breach.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FlFyfmCf8NjeCBxodzTIU%2Fimage.png?alt=media&amp;token=083bb214-b436-41ed-b640-01b1a616c811" alt=""><figcaption></figcaption></figure>
-
 ## Weak password policy
 
 The policy does not force strong passwords or protect account management:

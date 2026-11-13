@@ -103,7 +103,9 @@ if (dataEl && form && input && log && ps1) {
       for (const name of children(target)) {
         const path = target ? `${target}/${name}` : name;
         const file = byPath.get(path);
-        printLink(dirs.has(path) ? name + '/' : name, file ? file.h : '/' + path + '/', file ? file.t : '');
+        const label = dirs.has(path) ? name + '/' : name;
+        if (file) printLink(label, file.h, file.t);
+        else print(label);
       }
     },
     cd(args) {
@@ -132,9 +134,9 @@ if (dataEl && form && input && log && ps1) {
       if (!args[0]) return fail('open: give me a page name. Try: ls');
       const target = resolve(args[0]);
       const f = target !== null ? byPath.get(target) : undefined;
-      if (!f && !(target !== null && dirs.has(target))) return fail(`open: ${args[0]}: no such page`);
-      print(`opening ${f ? f.t : '~/' + target} ...`, 'term-out term-dim');
-      window.location.href = f ? f.h : '/' + target + '/';
+      if (!f && target !== '') return fail(`open: ${args[0]}: no such page`);
+      print(`opening ${f?.t ?? '~/'} ...`, 'term-out term-dim');
+      window.location.href = f?.h ?? '/';
     },
     grep(args) {
       const q = args
@@ -176,8 +178,8 @@ if (dataEl && form && input && log && ps1) {
     log.append(echoRow);
     const [name, ...args] = line.trim().split(/\s+/);
     if (!name) return;
-    const fn = commands[name.toLowerCase()];
-    if (fn) fn(args);
+    const command = name.toLowerCase();
+    if (Object.hasOwn(commands, command)) commands[command](args);
     else fail(`${name}: command not found. Type help.`);
   };
 

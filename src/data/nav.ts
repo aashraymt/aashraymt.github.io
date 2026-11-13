@@ -1,6 +1,6 @@
 // Sidebar tree. Order and grouping follow ../gitbook-drafts/SUMMARY.md, with the new routes from SPEC.md.
 // Pages that exist in the collection but are not listed here are appended under their section by buildNav().
-import { entryHref, entryPath, isRoutable } from './content';
+import { entryHref, entryPath, isRoutable, type DocEntry } from './content';
 
 export interface NavNode {
   label: string;
@@ -161,10 +161,7 @@ export const nav: NavNode[] = [
 const STATIC_HREFS = new Set(['/posts/']);
 
 /** The minimum buildNav() needs from a collection entry. */
-export interface NavEntry {
-  id: string;
-  data: { title: string; order: number };
-}
+type NavEntry = { id: string; data: Pick<DocEntry['data'], 'title' | 'order' | 'status'> };
 
 function clone(nodes: NavNode[]): NavNode[] {
   return nodes.map((n) => ({ ...n, children: n.children ? clone(n.children) : undefined }));

@@ -30,8 +30,6 @@ Missing input sanitization can let attackers upload malicious payloads. If an up
 
 Providers use headers to tell the consumer how to handle a response and what the security requirements are. Misconfigured headers can lead to information disclosure, downgrade attacks, and cross-site scripting. Extra services running alongside the API often add headers for metrics or as a sign of assurance.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FI5TRU7DkQ7iIDs2kiAbw%2Fimage.png?alt=media&amp;token=828a6967-2f3e-42ea-8c88-2f3e57ce4191" alt=""><figcaption></figcaption></figure>
-
 * `X-Powered-By` reveals the backend technology, often with the exact service and version. That is enough to search for published exploits for it.
 * `X-XSS-Protection` is meant to control the browser's XSS filter. A value of `0` means it is off and `1` means it is on. Headers like this show whether a control is in place.
 * `X-Response-Time` comes from middleware that reports usage metrics (566.43 milliseconds in the screenshot). If the API is configured poorly, it becomes a side channel. Suppose a made-up account like `/user/account/thisdefinitelydoesnotexist` always returns about 25.5 ms, while a real account like `/user/account/1021` returns about 510 ms. An attacker can brute force account numbers and watch for the slower responses to learn which ones exist.
@@ -43,8 +41,6 @@ Any API that returns sensitive information should use TLS, even if it is only in
 ### Default accounts and methods
 
 If a service keeps default credentials and they are known, an attacker can use them to take on that account's role, reach sensitive data or admin functions, and compromise the supporting systems. Unnecessary HTTP methods raise the risk that the application handles them badly or discloses information.
-
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FEEvaSZdT6zwxWQUN5a3B%2Fimage.png?alt=media&amp;token=96ce201d-1aee-4539-bc93-52d2d475460a" alt=""><figcaption></figcaption></figure>
 
 ## Detection
 

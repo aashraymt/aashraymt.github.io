@@ -65,7 +65,7 @@ ssh nathan@10.10.10.245
 
 ![SSH login to 10.10.10.245 as nathan landing at the nathan@cap prompt](/images/writeups/htb-cap/07.png)
 
-![nathan shell listing user.txt, with the flag value blurred](/images/writeups/htb-cap/08.png)
+![nathan shell listing user.txt, with the flag value redacted](/images/writeups/htb-cap/08.png)
 
 ### Privilege escalation through a Linux capability
 
@@ -77,7 +77,7 @@ getcap -r / 2>/dev/null
 
 The Python 3.8 binary carried `cap_setuid+ep`. That capability lets the process call `setuid(0)` and become root without sudo, so a one-liner that sets UID 0 and spawns a shell gave me a root shell. `whoami` returned `root`, and the root flag followed.
 
-![Root shell on cap where whoami returns root and root.txt is read, with flag values blurred](/images/writeups/htb-cap/09.png)
+![Root shell on cap where whoami returns root and root.txt is read, with flag values redacted](/images/writeups/htb-cap/09.png)
 
 HTB then marked the machine as pwned on my account.
 

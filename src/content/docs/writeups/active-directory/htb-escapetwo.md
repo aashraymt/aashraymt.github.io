@@ -58,13 +58,13 @@ I pulled down two Excel files. `file` showed they were not quite what the extens
 
 ![file command output identifying both xlsx files as Zip archive data](/images/writeups/htb-escapetwo/05.jpg)
 
-![Table built from sharedStrings.xml listing usernames and passwords for angela, oscar, kevin and sa](/images/writeups/htb-escapetwo/06.png)
+![Table built from sharedStrings.xml with lab account records redacted](/images/writeups/htb-escapetwo/06.png)
 
 ### MSSQL command execution
 
 The recovered `sa` credentials authenticated to MSSQL. Connecting with Impacket's MSSQL client, I confirmed the version and then used `xp_cmdshell` for command execution. When `xp_cmdshell` is disabled, you can re-enable it from a privileged SQL login.
 
-![nxc MSSQL local-auth check showing the sa login accepted on DC01](/images/writeups/htb-escapetwo/07.jpg)
+![nxc MSSQL local-auth check showing the sa login accepted on DC01](/images/writeups/htb-escapetwo/07.png)
 
 ```bash title="mssql.sh"
 python3 mssqlclient.py sa:'<redacted>'@10.10.11.51
@@ -97,11 +97,11 @@ nxc smb 10.10.11.51 -u 'rose' -p '<redacted>' --users   # build adusers.txt
 nxc winrm 10.10.11.51 -u adusers.txt -p '<redacted>'
 ```
 
-![nxc WinRM password spray across adusers.txt failing for several accounts and succeeding for ryan](/images/writeups/htb-escapetwo/17.jpg)
+![nxc WinRM password spray across adusers.txt failing for several accounts and succeeding for ryan](/images/writeups/htb-escapetwo/17.png)
 
 The password matched the user `ryan`, and `ryan` could log in over WinRM with evil-winrm. A hash was waiting on `ryan`'s desktop (redacted).
 
-![evil-winrm shell opened as ryan in his Documents folder](/images/writeups/htb-escapetwo/19.jpg)
+![evil-winrm shell opened as ryan in his Documents folder](/images/writeups/htb-escapetwo/19.png)
 
 ### BloodHound and ACL abuse
 
@@ -118,29 +118,29 @@ python3 dacledit.py -action write -rights 'FullControl' -principal 'ryan' -targe
 
 The first `owneredit.py` attempts failed until I fixed the syntax and added `sequel.htb` to `/etc/hosts`.
 
-![owneredit.py attempts ending with OwnerSid modified successfully on ca_svc](/images/writeups/htb-escapetwo/24.jpg)
+![owneredit.py attempts ending with OwnerSid modified successfully on ca_svc](/images/writeups/htb-escapetwo/24.png)
 
-![dacledit.py output showing the DACL backed up and modified successfully for ca_svc](/images/writeups/htb-escapetwo/25.jpg)
+![dacledit.py output showing the DACL backed up and modified successfully for ca_svc](/images/writeups/htb-escapetwo/25.png)
 
 ### Shadow credentials and ADCS ESC4 to Domain Admin
 
 With control over `ca_svc`, I used PyWhisker to add a Key Credential (shadow credentials) to the account, which let me authenticate as it and obtain a TGT and NT hash through PKINITtools (both redacted).
 
-![PyWhisker adding a KeyCredential to ca_svc and saving a PFX certificate](/images/writeups/htb-escapetwo/26.jpg)
+![PyWhisker adding a KeyCredential to ca_svc and saving a PFX certificate](/images/writeups/htb-escapetwo/26.png)
 
-![gettgtpkinit.py requesting a TGT for ca_svc with the PFX and saving it to a file](/images/writeups/htb-escapetwo/27.jpg)
+![gettgtpkinit.py requesting a TGT for ca_svc with the PFX and saving it to a file](/images/writeups/htb-escapetwo/27.png)
 
-![getnthash.py recovering the NT hash for ca_svc from the TGT](/images/writeups/htb-escapetwo/28.jpg)
+![getnthash.py recovering the NT hash for ca_svc from the TGT](/images/writeups/htb-escapetwo/28.png)
 
-![nxc SMB check showing the ca_svc NT hash accepted on DC01](/images/writeups/htb-escapetwo/29.jpg)
+![nxc SMB check showing the ca_svc NT hash accepted on DC01](/images/writeups/htb-escapetwo/29.png)
 
 `ca_svc` had rights over a certificate template, which is the ESC4 condition: an attacker who can edit a template can make it issue authentication certificates for arbitrary users. With Certipy I modified the `DunderMifflinAuthentication` template, requested a certificate specifying the domain administrator as the subject, and then authenticated with that certificate to recover the administrator's hash. That hash logged me in as `administrator` over WinRM.
 
-![Certipy find as ca_svc enumerating 34 certificate templates and one certificate authority](/images/writeups/htb-escapetwo/30.jpg)
+![Certipy find as ca_svc enumerating 34 certificate templates and one certificate authority](/images/writeups/htb-escapetwo/30.png)
 
 ![Certipy output for the DunderMifflinAuthentication template flagging ESC4 because Cert Publishers has dangerous permissions](/images/writeups/htb-escapetwo/33.jpg)
 
-![Certipy template command saving the old configuration and updating DunderMifflinAuthentication](/images/writeups/htb-escapetwo/31.jpg)
+![Certipy template command saving the old configuration and updating DunderMifflinAuthentication](/images/writeups/htb-escapetwo/31.png)
 
 ![Certipy output after the change showing Authenticated Users with full control of the template and ESC1 to ESC3 flagged](/images/writeups/htb-escapetwo/36.jpg)
 
@@ -153,11 +153,11 @@ certipy-ad auth -pfx administrator_dc01.pfx
 evil-winrm -i 10.10.11.51 -u 'administrator' -H <redacted>
 ```
 
-![Certipy req output issuing a certificate with UPN administrator@sequel.htb saved as administrator_dc01.pfx](/images/writeups/htb-escapetwo/38.jpg)
+![Certipy req output issuing a certificate with UPN administrator@sequel.htb saved as administrator_dc01.pfx](/images/writeups/htb-escapetwo/38.png)
 
-![Certipy auth with administrator_dc01.pfx getting a TGT and the administrator NT hash](/images/writeups/htb-escapetwo/39.jpg)
+![Certipy auth with administrator_dc01.pfx getting a TGT and the administrator NT hash](/images/writeups/htb-escapetwo/39.png)
 
-![evil-winrm shell opened as administrator using the NT hash](/images/writeups/htb-escapetwo/40.jpg)
+![evil-winrm shell opened as administrator using the NT hash](/images/writeups/htb-escapetwo/40.png)
 
 ![Administrator desktop listing showing root.txt](/images/writeups/htb-escapetwo/41.jpg)
 

@@ -60,7 +60,7 @@ z.extractall('.')
 
 The raw file has no header, so the 43 columns are mapped explicitly before anything else.
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FrYZcyR9kaWOkgB5vcFDN%2Fimage.png?alt=media&amp;token=83be8cb0-7eb9-449c-9ef1-dd9f5d869a55" alt="The labeled NSL-KDD dataframe"><figcaption></figcaption></figure>
+<p>The labeled NSL-KDD dataframe.</p>
 
 ## Training
 
@@ -102,7 +102,7 @@ F1-Score: 0.9947
       Access       0.96      0.92      0.94       764
 ```
 
-<figure><img src="https://3542531408-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FSyIJeOUWOBybHBLrjf9m%2Fuploads%2FuE462V0tpoMdy9gyc3ab%2Fimage.png?alt=media&amp;token=1b67b2c0-cb3c-49dc-85e1-2c0509684052" alt="Confusion matrix for the test split"><figcaption></figcaption></figure>
+<p>Confusion matrix for the test split.</p>
 
 The two big classes (Normal, DoS) are essentially solved. The Privilege class, with 21 examples in the split, is where the model falls apart: 0.24 recall means it misses three out of four. That gap between the headline accuracy and the rare-class recall is the whole point. A detector that scores 99% but misses the privilege-escalation attempts is missing the attacks you most want to catch, and a single accuracy number hides that.
 

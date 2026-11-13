@@ -12,7 +12,6 @@ source: repo
 |---|---|---|---|
 | [Vuln-Firmware Lab](/projects/vuln-firmware-lab/) | Fuzzing and exploiting a UART command parser in a small C "device". My current fuzzing work (v2). | C | Flagship. Repo not public yet |
 | [Evo-Fuzz](/projects/evo-fuzz/) | An evolutionary HTTP fuzzer I wrote to learn how fuzzers work. My first fuzzing project (v1). | Python, .NET 8 target | Finished, Feb 2026 |
-| [RiskRank](/projects/riskrank/) | Team senior design project that prioritizes vulnerabilities with CVSS, EPSS, and CISA KEV. | n/a | Ongoing capstone. Repo private |
 | [Red Team Simulation Lab](/projects/red-team-simulation-lab/) | External web foothold to forest compromise in a lab Active Directory environment. | Kali, Burp Suite, Nmap, Ligolo-ng, CrackMapExec, Impacket | Finished, Sep to Dec 2025 |
 | [Multi-Cloud Detection Lab](/projects/multi-cloud-detection-lab/) | Elastic SIEM ingesting AWS, Azure, and GCP logs, with TheHive for case management. Built during the MCBTA certification. | Elasticsearch, Logstash, Filebeat, Kibana, TheHive | Finished, Jul to Aug 2025 |
 | [Azure Sentinel Honeypot Lab](/projects/azure-sentinel-honeypot-lab/) | Internet-exposed RDP honeypot feeding Microsoft Sentinel, with KQL and a geolocation attack map. | Microsoft Sentinel, Log Analytics, KQL | Finished, Sep 2025 |
