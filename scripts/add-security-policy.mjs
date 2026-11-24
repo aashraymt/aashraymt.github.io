@@ -23,7 +23,12 @@ for (const entry of readdirSync(dist, { recursive: true, withFileTypes: true }))
   const document = parse(html, { sourceCodeLocationInfo: true });
   const head = document.childNodes.find((node) => node.tagName === 'html').childNodes.find((node) => node.tagName === 'head');
   const charset = head.childNodes.find((node) => node.tagName === 'meta' && node.attrs.some(({ name }) => name === 'charset'));
-  const offset = charset?.sourceCodeLocation.endOffset ?? head.sourceCodeLocation.startTag.endOffset;
+  // Redirect pages that Astro generates have no explicit <head> tag, so fall back to the head's first child.
+  const offset =
+    charset?.sourceCodeLocation.endOffset ??
+    head.sourceCodeLocation?.startTag?.endOffset ??
+    head.childNodes[0]?.sourceCodeLocation?.startOffset ??
+    0;
   const scripts = new Set();
   const styles = new Set();
   collect(document, html, scripts, styles);

@@ -10,7 +10,7 @@ source: repo
 
 | Project | What it is | Stack | Status |
 |---|---|---|---|
-| [Vuln-Firmware Lab](/projects/vuln-firmware-lab/) | Fuzzing and exploiting a UART command parser in a small C "device". My current fuzzing work (v2). | C | Flagship. Repo not public yet |
+| [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/) | Four planted bugs in a small C "device", fuzzed with libFuzzer and AFL++, one exploited to a shell, all fixed and re-fuzzed to 0 crashes. My current fuzzing work (v2). | C, AFL++, libFuzzer, GDB | Flagship. Finished Nov 2026. [Repo](https://github.com/aashraymt/vuln-firmware-lab) |
 | [Evo-Fuzz](/projects/evo-fuzz/) | An evolutionary HTTP fuzzer I wrote to learn how fuzzers work. My first fuzzing project (v1). | Python, .NET 8 target | Finished, Feb 2026 |
 | [Red Team Simulation Lab](/projects/red-team-simulation-lab/) | External web foothold to forest compromise in a lab Active Directory environment. | Kali, Burp Suite, Nmap, Ligolo-ng, CrackMapExec, Impacket | Finished, Sep to Dec 2025 |
 | [Multi-Cloud Detection Lab](/projects/multi-cloud-detection-lab/) | Elastic SIEM ingesting AWS, Azure, and GCP logs, with TheHive for case management. Built during the MCBTA certification. | Elasticsearch, Logstash, Filebeat, Kibana, TheHive | Finished, Jul to Aug 2025 |

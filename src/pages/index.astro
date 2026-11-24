@@ -56,9 +56,9 @@ const focusAreas = [
 
 const featured = [
   {
-    title: 'Vuln-Firmware Lab',
-    text: 'Four planted memory-corruption bugs in a UART-style C parser. AFL++ found all four in about 90 seconds. libFuzzer stalled on one, and the page explains why.',
-    href: '/projects/vuln-firmware-lab/',
+    title: 'UART Command Parser',
+    text: 'Four planted bugs in a C firmware parser. AFL++ found all four, libFuzzer stalled on one, one became a shell, and the fixed build took 0 crashes in a fresh campaign.',
+    href: '/projects/uart-command-parser/',
   },
   {
     title: 'When the LLM is the filter',
@@ -171,8 +171,8 @@ const skills = [
           <a href="/certifications/">Certifications</a> page.
         </li>
         <li>
-          Flagship project: <a href="/projects/vuln-firmware-lab/">Vuln-Firmware Lab</a>, a deliberately vulnerable C
-          command parser that I fuzzed with libFuzzer and AFL++.
+          Flagship project: <a href="/projects/uart-command-parser/">Fuzzing and Exploiting a UART Command Parser</a>: four
+          planted bugs in a C firmware parser, fuzzed with libFuzzer and AFL++, one exploited to a shell, all fixed.
         </li>
         <li>Cyber@UC CTF team since August 2024. National Cyber League Fall 2025 team game: top 7%.</li>
       </ul>

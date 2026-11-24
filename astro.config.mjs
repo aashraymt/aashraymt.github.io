@@ -10,6 +10,8 @@ export default defineConfig({
   site: 'https://aashraymt.github.io',
   trailingSlash: 'always',
   compressHTML: true,
+  // Old project URL, kept working for links already shared.
+  redirects: { '/projects/vuln-firmware-lab': '/projects/uart-command-parser/' },
   vite: { build: { assetsInlineLimit: 0 } },
   markdown: { processor: unified({ rehypePlugins: [rehypeRaw, sanitizeNotion] }) },
   integrations: [

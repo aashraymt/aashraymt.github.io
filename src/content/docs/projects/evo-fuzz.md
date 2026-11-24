@@ -8,7 +8,7 @@ status: published
 source: repo
 ---
 
-An evolutionary fuzzer I wrote in Python (Feb 2026) to learn how fuzzers work on the inside. It found a crash that I planted myself in my own .NET 8 web API. This is v1 of my fuzzing work. The [Vuln-Firmware Lab](/projects/vuln-firmware-lab/) is v2.
+An evolutionary fuzzer I wrote in Python (Feb 2026) to learn how fuzzers work on the inside. It found a crash that I planted myself in my own .NET 8 web API. This is v1 of my fuzzing work. [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/) is v2.
 
 ## Why I built it
 
@@ -77,4 +77,4 @@ Repo: [github.com/aashraymt/Evo-Fuzz](https://github.com/aashraymt/Evo-Fuzz)
 
 ## What I'd do next
 
-The honest lesson from v1 was that response length is a weak signal, and that I wanted to fuzz something lower level with real coverage feedback. That is what the [Vuln-Firmware Lab](/projects/vuln-firmware-lab/) is. I am also working through the OST2 "Fuzzing 1001" course, which uses AFL++.
+The honest lesson from v1 was that response length is a weak signal, and that I wanted to fuzz something lower level with real coverage feedback. That is what [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/) is. I am also working through the OST2 "Fuzzing 1001" course, which uses AFL++.

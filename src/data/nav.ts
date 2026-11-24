@@ -24,7 +24,7 @@ export const nav: NavNode[] = [
     label: 'Projects',
     href: '/projects/',
     children: [
-      { label: 'Vuln-Firmware Lab', href: '/projects/vuln-firmware-lab/' },
+      { label: 'UART Command Parser', href: '/projects/uart-command-parser/' },
       { label: 'Evo-Fuzz', href: '/projects/evo-fuzz/' },
       { label: 'RiskRank', href: '/projects/riskrank/' },
       { label: 'Red Team Simulation Lab', href: '/projects/red-team-simulation-lab/' },
