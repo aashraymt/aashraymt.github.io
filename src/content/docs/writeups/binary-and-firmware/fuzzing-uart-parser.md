@@ -11,7 +11,7 @@ source: repo
 
 <div class="callout info">
 
-TL;DR: I ran libFuzzer and AFL++ against one UART-style C command parser through matched harnesses, same seeds and dictionary, so the only variable was search strategy. Both found three of four planted bugs fast; only AFL++ found the length-triggered stack overflow, and it also surfaced a bug I never planted. This page is about the harness design and why that split happened. The target itself is described in [Vuln-Firmware Lab](/projects/vuln-firmware-lab/).
+TL;DR: I ran libFuzzer and AFL++ against one UART-style C command parser through matched harnesses, same seeds and dictionary, so the only variable was search strategy. Both found three of four planted bugs fast; only AFL++ found the length-triggered stack overflow, and it also surfaced a bug I never planted. This page is about the harness design and why that split happened. The target itself is described in [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/).
 
 </div>
 
@@ -63,7 +63,7 @@ How to stop this class of bug before a fuzzer or an attacker reaches it:
 - Compiler hardening on any build that ships. A stack canary, a non-executable stack, PIE with ASLR, and `_FORTIFY_SOURCE` each make a stack overflow harder to turn into control of the program, and `_FORTIFY_SOURCE` swaps `strcpy` for a checked version that aborts on overflow. `-Werror=format-security` turns the uncontrolled format string class into a build failure.
 - Bounds checks in the handler. Reject oversized input instead of truncating it. Use `>=` in length guards so there is room for the terminator. Do allocation-size arithmetic in a width that cannot wrap, and clamp every copy to the capacity of the destination, not to the length of the incoming payload.
 - Sanitizer builds in testing. An ASan and UBSan build is what makes single-byte and non-crashing defects visible. My `make verify` target replays a curated reproducer for each bug and asserts the exact sanitizer finding.
-- Fuzzing in CI. This is planned, not done: the next step is running `make verify` on every push, then applying the fixes and re-running both fuzzers to confirm zero crashes.
+- Fuzzing in CI. GitHub Actions now runs the gating checks on every push, and the fixed handlers survive a fresh 60-second AFL++ campaign with 0 crashes. The exploit and the fix are on the [project page](/projects/uart-command-parser/).
 
 ## Key takeaways
 
@@ -74,7 +74,8 @@ How to stop this class of bug before a fuzzer or an attacker reaches it:
 
 ## References
 
-- Project page: [Vuln-Firmware Lab](/projects/vuln-firmware-lab/)
+- Project page: [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/)
+- Code: [github.com/aashraymt/vuln-firmware-lab](https://github.com/aashraymt/vuln-firmware-lab)
 - AFL++ project documentation (persistent mode, dictionaries)
 - LLVM libFuzzer documentation (fork mode, coverage guidance)
 - Clang AddressSanitizer and UndefinedBehaviorSanitizer documentation

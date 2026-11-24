@@ -19,7 +19,7 @@ Notes on fuzzing and memory-safety bugs in C and C++ targets. This is the level 
 
 | Page | What it is | Source |
 |---|---|---|
-| [libFuzzer vs AFL++ on the same parser](/writeups/binary-and-firmware/fuzzing-uart-parser/) | Two fuzzers, one entry point, and why only one of them found the stack overflow | My own project, [Vuln-Firmware Lab](/projects/vuln-firmware-lab/) |
+| [libFuzzer vs AFL++ on the same parser](/writeups/binary-and-firmware/fuzzing-uart-parser/) | Two fuzzers, one entry point, and why only one of them found the stack overflow | My own project, [Fuzzing and Exploiting a UART Command Parser](/projects/uart-command-parser/) |
 | [AFL++ first steps](/writeups/binary-and-firmware/afl-first-steps/) | Building, fuzzing, and debugging a small target with AFL++ in Podman | Guided exercise from the OST2 "Fuzzing 1001" course |
 
 Related: [Evo-Fuzz](/projects/evo-fuzz/), my earlier Python fuzzer for a web API target.
